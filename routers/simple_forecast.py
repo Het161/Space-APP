@@ -1,15 +1,17 @@
 # routers/simple_forecast.py
 """
 Simplified Weather Forecast Endpoint
+Supports both GET and POST methods for frontend integration
 Based on mentor feedback: User inputs location + date/time, gets W/P/T/H probabilities
 No threshold input needed - system uses predefined values
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
+from pydantic import BaseModel, Field
 from datetime import datetime
 from services.nasa_power import get_nasa_power_data
 import statistics
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 router = APIRouter(prefix="/api/simple-forecast", tags=["Simple Forecast"])
 
@@ -23,6 +25,25 @@ THRESHOLDS = {
     "hot": 35.0,           # °C - hot day
     "very_hot": 40.0       # °C - extreme heat
 }
+
+
+# POST Request Model
+class ForecastRequest(BaseModel):
+    """Request body for POST endpoint"""
+    lat: float = Field(..., ge=-90, le=90, description="Latitude")
+    lon: float = Field(..., ge=-180, le=180, description="Longitude")
+    date: str = Field(..., description="Date in YYYY-MM-DD format")
+    time: str = Field(default="12:00", description="Time in HH:MM format")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "lat": 19.076,
+                "lon": 72.877,
+                "date": "2025-06-15",
+                "time": "15:00"
+            }
+        }
 
 
 def filter_by_date(data: dict, target_month: int, target_day: int) -> List[float]:
@@ -53,22 +74,11 @@ def calculate_probability(values: List[float], threshold: float, condition: str 
     return round(count / len(values) * 100, 1)  # Return as percentage
 
 
-@router.get("/")
-async def get_simple_forecast(
-    lat: float = Query(..., ge=-90, le=90, description="Latitude"),
-    lon: float = Query(..., ge=-180, le=180, description="Longitude"),
-    date: str = Query(..., description="Date in YYYY-MM-DD format"),
-    time: str = Query(default="12:00", description="Time in HH:MM format")
-):
+def process_forecast(lat: float, lon: float, date: str, time: str) -> dict:
     """
-    Simple weather forecast endpoint
-    
-    User inputs: Location (lat/lon) + Date + Time
-    System returns: W, P, T, H probabilities with summary
-    
-    Example: /api/simple-forecast?lat=19.0760&lon=72.8777&date=2025-06-15&time=15:00
+    Core forecast processing logic
+    Separated for reuse in both GET and POST endpoints
     """
-    
     # Parse date/time
     try:
         target_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
@@ -201,3 +211,52 @@ async def get_simple_forecast(
         "data_points_analyzed": len(temp_max_data),
         "years_analyzed": f"{start_year}-{end_year}"
     }
+
+
+# GET ENDPOINT (Original)
+@router.get("/")
+async def get_simple_forecast(
+    lat: float = Query(..., ge=-90, le=90, description="Latitude"),
+    lon: float = Query(..., ge=-180, le=180, description="Longitude"),
+    date: str = Query(..., description="Date in YYYY-MM-DD format"),
+    time: str = Query(default="12:00", description="Time in HH:MM format")
+):
+    """
+    GET: Simple weather forecast endpoint
+    
+    User inputs: Location (lat/lon) + Date + Time
+    System returns: W, P, T, H probabilities with summary
+    
+    Example: /api/simple-forecast?lat=19.0760&lon=72.8777&date=2025-06-15&time=15:00
+    """
+    return process_forecast(lat, lon, date, time)
+
+
+# POST ENDPOINT (New - for frontend)
+@router.post("/")
+async def post_simple_forecast(request: ForecastRequest = Body(...)):
+    """
+    POST: Simple weather forecast endpoint
+    
+    Accepts JSON body with location, date, and time
+    Returns: W, P, T, H probabilities with summary
+    
+    Example POST body:
+    {
+        "lat": 19.076,
+        "lon": 72.877,
+        "date": "2025-06-15",
+        "time": "15:00"
+    }
+    """
+    return process_forecast(request.lat, request.lon, request.date, request.time)
+
+
+# Alternative POST endpoint with different path (if frontend prefers)
+@router.post("/forecast")
+async def post_forecast_alt(request: ForecastRequest = Body(...)):
+    """
+    Alternative POST endpoint at /api/simple-forecast/forecast
+    Same functionality as POST /api/simple-forecast/
+    """
+    return process_forecast(request.lat, request.lon, request.date, request.time)
