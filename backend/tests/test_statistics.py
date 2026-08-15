@@ -325,6 +325,42 @@ def test_analyse_returns_every_condition(three_year_series: PowerSeries) -> None
     assert "June 15" in summary["detail"]
 
 
+def test_worst_risk_picks_the_most_severe_level() -> None:
+    assert stats._worst_risk("low", "low") == "low"
+    assert stats._worst_risk("low", "moderate") == "moderate"
+    assert stats._worst_risk("moderate", "high", "low") == "high"
+
+
+def test_verdict_is_not_low_when_one_dimension_dominates() -> None:
+    """Regression: a near-certain-rain tropical day must not read "low risk".
+
+    The weighted blend alone scored a 94%-chance-of-rain Singapore day as low,
+    because only 36% of days cleared the 10 mm "very wet" bar.
+    """
+
+    def generator(d: date) -> dict[str, float | None]:
+        # Rain almost every day, but mostly light: clears 1 mm, rarely 10 mm.
+        wet = 12.0 if d.day % 3 == 0 else 2.5
+        return {
+            "T2M": 27.0,
+            "T2M_MAX": 30.0,
+            "T2M_MIN": 25.0,
+            "PRECTOTCORR": wet,
+            "WS10M": 2.0,
+            "WS2M": 1.5,
+            "RH2M": 60.0,
+            "T2MDEW": 24.0,
+        }
+
+    series = build_series(1996, 2025, generator)
+    result = stats.analyse(series, 11, 20, 7, stats.resolve_thresholds({}))
+    summary = result["summary"]
+
+    assert summary["any_rain_percent"] == 100.0
+    assert summary["overall_risk_score"] < 0.15  # the blend alone says "low"
+    assert summary["overall_risk_level"] == "high"
+
+
 def test_threshold_overrides_are_applied(three_year_series: PowerSeries) -> None:
     thresholds = stats.resolve_thresholds({"very_hot": 45.0})
     result = stats.analyse(three_year_series, 6, 15, 7, thresholds)

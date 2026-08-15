@@ -5,6 +5,12 @@ import "./globals.css";
 import { Providers } from "@/app/providers";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TITLE,
+  SITE_URL,
+} from "@/lib/site";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,17 +24,10 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
-const SITE_URL = "https://orbitwx.vercel.app";
-const DESCRIPTION =
-  "orbitWx turns 30 years of NASA Earth observation data into the odds of very hot, cold, windy, wet or uncomfortable weather at any location on any calendar date. Climatology, not a forecast.";
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: {
-    default: "orbitWx — Will It Rain On My Parade? | NASA-data weather probabilities",
-    template: "%s | orbitWx",
-  },
-  description: DESCRIPTION,
+  title: { default: SITE_TITLE, template: `%s | ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
   keywords: [
     "NASA POWER",
     "weather probability",
@@ -43,15 +42,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: SITE_URL,
-    siteName: "orbitWx",
+    siteName: SITE_NAME,
     title: "orbitWx — Will It Rain On My Parade?",
-    description: DESCRIPTION,
+    description: SITE_DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
     title: "orbitWx — Will It Rain On My Parade?",
-    description: DESCRIPTION,
+    description: SITE_DESCRIPTION,
   },
+  alternates: { canonical: SITE_URL },
   robots: { index: true, follow: true },
 };
 

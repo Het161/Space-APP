@@ -442,12 +442,21 @@ def compute_trend(
 # --------------------------------------------------------------------------- #
 
 
+#: Ordered least-to-most severe, so risk levels can be compared.
+RISK_ORDER: tuple[str, ...] = ("low", "moderate", "high")
+
+
 def risk_level(probability: float) -> str:
     if probability < 0.15:
         return "low"
     if probability <= 0.40:
         return "moderate"
     return "high"
+
+
+def _worst_risk(*levels: str) -> str:
+    """The most severe of the given risk levels."""
+    return max(levels, key=RISK_ORDER.index)
 
 
 def analyse_condition(
@@ -548,6 +557,16 @@ def build_summary(
 
     driver = max(conditions.values(), key=lambda c: float(c["probability"]))  # type: ignore[arg-type]
 
+    # The weighted score alone can read "low" while one dimension is near
+    # certain — a 94%-chance-of-rain day in Singapore is not a low-risk day for
+    # a parade. The headline verdict therefore takes the worst of the blended
+    # score, the single worst condition, and the any-rain tier.
+    overall_level = _worst_risk(
+        risk_level(score),
+        str(driver["risk_level"]),
+        risk_level(float(any_rain["probability"])),  # type: ignore[arg-type]
+    )
+
     return {
         "headline": f"{any_rain['percent']}% chance of rain on your parade",
         "detail": (
@@ -557,7 +576,7 @@ def build_summary(
         "any_rain_percent": any_rain["percent"],
         "heavy_rain_percent": heavy_rain["percent"],
         "overall_risk_score": score,
-        "overall_risk_level": risk_level(score),
+        "overall_risk_level": overall_level,
         "dominant_risk": driver["key"],
         "dominant_risk_label": driver["label"],
         "dominant_risk_percent": driver["percent"],
