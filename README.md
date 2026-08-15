@@ -14,6 +14,8 @@
 [![Render](https://img.shields.io/badge/api-Render-46E3B7?logo=render&logoColor=white)](https://render.com)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
 
+### [**→ Live app**](https://orbitwx.vercel.app)
+
 **NASA Space Apps Challenge 2025** · [Will It Rain On My Parade?](https://www.spaceappschallenge.org/2025/challenges/will-it-rain-on-my-parade/) · Team Coders
 
 </div>
@@ -149,7 +151,7 @@ request URL.
 
 ## API reference
 
-Base URL: `https://<your-render-app>.onrender.com` · interactive docs at `/docs`
+Base URL: `https://orbitwx-api.onrender.com` · interactive docs at `/docs`
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -228,7 +230,10 @@ npx tsc --noEmit && npm run lint && npm run build
 ### Backend → Render
 
 `backend/render.yaml` is a ready blueprint: **New → Blueprint**, point it at this
-repo. Set `ALLOWED_ORIGINS` to include your Vercel URL.
+repo. `ALLOWED_ORIGINS` is already set to `https://orbitwx.vercel.app`, and the
+service is named `orbitwx-api` so it lands on
+`https://orbitwx-api.onrender.com` — the URL the deployed frontend already
+points at. Nothing else to configure.
 
 The free tier sleeps after 15 minutes and takes ~30–50 s to wake — the UI shows a
 *"Waking the satellite uplink…"* state when a request runs long. To avoid it
@@ -237,11 +242,16 @@ every 10 minutes.
 
 ### Frontend → Vercel
 
-Import the repo, set the root directory to `frontend`, and add one environment
-variable:
+Already deployed at **[orbitwx.vercel.app](https://orbitwx.vercel.app)**, with
+the GitHub repo connected for auto-deploys on push to `main` (root directory
+`frontend`).
+
+To reproduce from scratch: import the repo, set the root directory to
+`frontend`, and add:
 
 ```
-NEXT_PUBLIC_API_URL=https://<your-render-app>.onrender.com
+NEXT_PUBLIC_API_URL=https://orbitwx-api.onrender.com
+NEXT_PUBLIC_SITE_URL=https://orbitwx.vercel.app
 ```
 
 ---
