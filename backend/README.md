@@ -99,8 +99,9 @@ models/       Pydantic v2 response schemas — the public API contract
 
 ## Deployment (Render, free tier)
 
-`render.yaml` is a ready blueprint. Set `ALLOWED_ORIGINS` to include your Vercel
-URL.
+`render.yaml` **at the repository root** is a ready blueprint (Render only looks
+there by default; it sets `rootDir: backend` to build this package).
+`ALLOWED_ORIGINS` already includes the deployed frontend.
 
 The free tier sleeps after 15 minutes of inactivity and takes ~30–50 s to wake.
 Optionally register a [cron-job.org](https://cron-job.org) job hitting `/health`

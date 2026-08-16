@@ -1,0 +1,40 @@
+# Render blueprint for the orbitWx API.
+#
+# Deploy: Render dashboard > New > Blueprint > pick this repo > Apply.
+# This file must live at the repository root — that is where Render looks by
+# default. `rootDir` below points the build at the backend package.
+#
+# Every env var value is quoted: unquoted YAML would turn 1996 into an integer
+# and false into a boolean, and Render's schema expects strings.
+services:
+  - type: web
+    name: orbitwx-api
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # 3.14 has no prebuilt pydantic-core wheel and fails to compile.
+      - key: PYTHON_VERSION
+        value: "3.13.1"
+      # CORS allowlist — the deployed frontend plus local development.
+      - key: ALLOWED_ORIGINS
+        value: "http://localhost:3000,https://orbitwx.vercel.app"
+      # 1996-2025 is exactly 30 full calendar years of NASA POWER data.
+      - key: POWER_START_YEAR
+        value: "1996"
+      - key: POWER_END_YEAR
+        value: "2025"
+      # Grid-cell cache: 24h TTL, bounded for the 512 MB free tier.
+      - key: CACHE_TTL_SECONDS
+        value: "86400"
+      - key: CACHE_MAX_ENTRIES
+        value: "50"
+      - key: RATE_LIMIT
+        value: "30/minute"
+      - key: DEBUG
+        value: "false"

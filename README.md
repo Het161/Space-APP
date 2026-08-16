@@ -229,8 +229,9 @@ npx tsc --noEmit && npm run lint && npm run build
 
 ### Backend → Render
 
-`backend/render.yaml` is a ready blueprint: **New → Blueprint**, point it at this
-repo. `ALLOWED_ORIGINS` is already set to `https://orbitwx.vercel.app`, and the
+`render.yaml` at the repo root is a ready blueprint: **New → Blueprint**, point
+it at this repo, Apply. (Render looks for `render.yaml` at the root by default;
+`rootDir: backend` inside it points the build at the API package.) `ALLOWED_ORIGINS` is already set to `https://orbitwx.vercel.app`, and the
 service is named `orbitwx-api` so it lands on
 `https://orbitwx-api.onrender.com` — the URL the deployed frontend already
 points at. Nothing else to configure.
@@ -271,12 +272,12 @@ orbitwx/
 │   │   │   └── comfort.py        # NOAA heat index
 │   │   ├── models/schemas.py     # Pydantic v2 — the API contract
 │   │   └── core/                 # cache · params · limiter
-│   ├── tests/                    # 56 pytest cases, no live API calls
-│   └── render.yaml
-└── frontend/
-    ├── src/app/                  # dashboard · methodology · about
-    ├── src/components/           # dashboard, charts, shadcn-style primitives
-    └── src/lib/                  # typed API client, types, geocoding, format
+│   └── tests/                    # 58 pytest cases, no live API calls
+├── frontend/
+│   ├── src/app/                  # dashboard · methodology · about
+│   ├── src/components/           # dashboard, charts, shadcn-style primitives
+│   └── src/lib/                  # typed API client, types, geocoding, format
+└── render.yaml                   # Render blueprint (must stay at the root)
 ```
 
 Design decisions worth knowing:
