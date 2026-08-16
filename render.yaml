@@ -34,7 +34,8 @@ services:
         value: "86400"
       - key: CACHE_MAX_ENTRIES
         value: "50"
+      # Two requests per dashboard analysis, so ~30 analyses/min per IP.
       - key: RATE_LIMIT
-        value: "30/minute"
+        value: "60/minute"
       - key: DEBUG
         value: "false"

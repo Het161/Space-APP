@@ -44,7 +44,10 @@ class Settings(BaseSettings):
     cache_max_entries: int = 50
 
     # --- rate limiting ---
-    rate_limit: str = "30/minute"
+    # Each dashboard analysis costs two requests (/probability + /best-days),
+    # so this is ~30 analyses per minute per IP. Repeat queries in the same
+    # grid cell are cache hits and never reach NASA POWER.
+    rate_limit: str = "60/minute"
 
     @property
     def cors_origins(self) -> list[str]:

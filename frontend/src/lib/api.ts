@@ -32,13 +32,25 @@ interface ErrorBody {
   retry_after?: number;
 }
 
-function messageFromBody(body: ErrorBody, status: number): string {
+function messageFromBody(
+  body: ErrorBody,
+  status: number,
+  retryAfter?: number,
+): string {
+  // Checked before body.error: slowapi's raw "Rate limit exceeded: 60 per 1
+  // minute" would otherwise win and read like a server fault rather than a
+  // "wait a moment" nudge.
+  if (status === 429) {
+    const wait = retryAfter
+      ? `Try again in ${retryAfter} second${retryAfter === 1 ? "" : "s"}.`
+      : "Try again in a moment.";
+    return `Too many requests in a short window. ${wait}`;
+  }
   if (body.error) return body.error;
   if (typeof body.detail === "string") return body.detail;
   if (Array.isArray(body.detail) && body.detail[0]?.msg) {
     return body.detail[0].msg;
   }
-  if (status === 429) return "Too many requests — give it a minute.";
   return `Request failed (${status}).`;
 }
 
@@ -72,10 +84,13 @@ async function getJson<T>(path: string, params: URLSearchParams): Promise<T> {
 
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as ErrorBody;
+    const header = Number(response.headers.get("retry-after"));
+    const retryAfter =
+      body.retry_after ?? (Number.isFinite(header) && header > 0 ? header : undefined);
     throw new ApiError(
-      messageFromBody(body, response.status),
+      messageFromBody(body, response.status, retryAfter),
       response.status,
-      body.retry_after,
+      retryAfter,
     );
   }
   return (await response.json()) as T;

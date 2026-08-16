@@ -181,7 +181,10 @@ Base URL: `https://orbitwx-api.onrender.com` · interactive docs at `/docs`
 curl "http://localhost:8000/api/v1/probability?lat=23.03&lon=72.58&month=10&day=15"
 ```
 
-`/api/v1/*` is rate limited to **30 requests/minute/IP**. `/health` is exempt so
+`/api/v1/*` is rate limited to **60 requests/minute/IP** (a dashboard analysis
+costs two). The key is taken from the rightmost `X-Forwarded-For` hop, not the
+socket address — behind a load balancer the latter is the proxy for every
+visitor, which would make the limit one global bucket. `/health` is exempt so
 uptime pings can keep the free-tier instance warm.
 
 ---
